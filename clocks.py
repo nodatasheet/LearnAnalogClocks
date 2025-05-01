@@ -85,6 +85,8 @@ class AnalogClockWidget(QWidget):
                 y = circle_diameter * -math.cos(angle)
                 x_offset = -5
                 y_offset = 2.5
+                if i == 60:
+                    i = 0
                 painter.drawText(int(x + x_offset), int(y + y_offset), str(i))
 
     def draw_hour_hand(self, painter: QPainter, time: QTime) -> None:
