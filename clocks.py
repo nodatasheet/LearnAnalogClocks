@@ -1,14 +1,41 @@
+import random
 import sys
 import math
-from PyQt5.QtCore import Qt, QTime, QPoint
+from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPolygon
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout, QLabel
+
+
+class TimeGenerator(QWidget):
+    """A widget with a button to generate a random time."""
+    time_generated = pyqtSignal(QTime)  # Signal to emit the new time
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # Create the "New Time" button
+        self.new_time_button = QPushButton("New Time", self)
+        self.new_time_button.setStyleSheet(
+            "font-size: 18px; color: white; background-color: gray;"
+        )
+        self.new_time_button.clicked.connect(self.generate_random_time)
+
+        # Layout for the button
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.new_time_button)
+
+    def generate_random_time(self):
+        """Generate a random time and emit it."""
+        random_hour = random.randint(0, 9)
+        random_minute = random.choice(range(0, 59, 5))
+        new_time = QTime(random_hour, random_minute)
+        self.time_generated.emit(new_time)  # Emit the new time
 
 
 class AnalogClockWidget(QWidget):
-    def __init__(self, manual_time: QTime, parent=None):
+    def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.manual_time = manual_time
+        self.time = time
 
         # Define the shapes of the hour, minute, and second hands
         self.hour_hand: QPolygon = QPolygon([
@@ -37,7 +64,7 @@ class AnalogClockWidget(QWidget):
     def paintEvent(self, event):
         side = min(self.width(), self.height())
 
-        time = self.manual_time
+        time = self.time
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -109,20 +136,20 @@ class AnalogClockWidget(QWidget):
 
 
 class DigitalClockWidget(QLabel):
-    def __init__(self, manual_time: QTime, parent=None):
+    def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.manual_time = manual_time
+        self.time = time
         self.setAlignment(Qt.AlignCenter)
         self.setStyleSheet("font-size: 64px;")  # Set font size
         self.update_text()
 
     def update_text(self):
         styled_hours = self._text_style(
-            self.manual_time.toString("hh"),
+            self.time.toString("hh"),
             "red"
         )
         styled_minutes = self._text_style(
-            self.manual_time.toString("mm"),
+            self.time.toString("mm"),
             "cyan"
         )
         separator = self._text_style(":", "white")
@@ -135,30 +162,40 @@ class DigitalClockWidget(QLabel):
 
 
 class Clock(QWidget):
-    def __init__(self, manual_time: QTime) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Analog Clock")
-        self.resize(500, 550)
+        self.resize(500, 600)
         self.setStyleSheet("background-color: black;")
 
-        self.manual_time = manual_time
+        self.time = QTime().currentTime()
 
-        # Layout to stack analog and digital clocks
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Analog clock widget
-        self.analog_clock_widget = AnalogClockWidget(self.manual_time, self)
+        self.analog_clock_widget = AnalogClockWidget(self.time, self)
         layout.addWidget(self.analog_clock_widget)
 
-        # Digital clock widget
-        self.digital_clock_widget = DigitalClockWidget(self.manual_time, self)
+        self.digital_clock_widget = DigitalClockWidget(self.time, self)
         layout.addWidget(self.digital_clock_widget)
+
+        self.time_generator = TimeGenerator(self)
+        self.time_generator.time_generated.connect(self.update_time)
+        layout.addWidget(self.time_generator)
+
+    def update_time(self, new_time: QTime):
+        """Update the clocks with the new time."""
+        self.manual_time = new_time
+
+        # Update the analog and digital clocks
+        self.analog_clock_widget.time = self.manual_time
+        self.analog_clock_widget.update()
+        self.digital_clock_widget.time = self.manual_time
+        self.digital_clock_widget.update_text()
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    time = QTime(3, 45)  # Set the manual time here
-    clock = Clock(time)
+    clock = Clock()
     clock.show()
     sys.exit(app.exec_())
