@@ -2,7 +2,7 @@ import random
 import sys
 import math
 from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QPolygon
+from PyQt5.QtGui import QFont, QPainter, QColor, QPolygon
 from PyQt5.QtWidgets import QApplication, QLayout, QPushButton, QWidget, QVBoxLayout, QLabel
 
 
@@ -139,7 +139,12 @@ class DigitalClockWidget(QLabel):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self.time = time
-        self.setStyleSheet("font-size: 32px;")
+
+        font = QFont()
+        font.setPointSize(32)
+        font.setBold(True)
+        self.setFont(font)
+
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_text()
 
@@ -171,18 +176,15 @@ class Clock(QWidget):
         self.time = QTime().currentTime()
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(0)
 
         self.analog_clock = AnalogClockWidget(self.time, self)
         layout.addWidget(self.analog_clock)
 
         self.time_generator = TimeGenerator(self)
         self.time_generator.time_generated.connect(self.update_time)
-        self.time_generator.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.time_generator)
 
         self.digital_clock = DigitalClockWidget(self.time, self)
-        self.digital_clock.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.digital_clock)
 
     def update_time(self, new_time: QTime):
