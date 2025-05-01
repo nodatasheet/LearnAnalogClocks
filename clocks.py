@@ -3,7 +3,7 @@ import sys
 import math
 from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
 from PyQt5.QtGui import QFont, QPainter, QColor, QPolygon
-from PyQt5.QtWidgets import QApplication, QLayout, QPushButton, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
 
 
 class TimeGenerator(QWidget):
@@ -16,7 +16,7 @@ class TimeGenerator(QWidget):
         # Create the "New Time" button
         self.new_time_button = QPushButton("New Time", self)
         self.new_time_button.setStyleSheet(
-            "font-size: 18px; color: white; background-color: gray;"
+            "font-size: 32px; color: white; background-color: gray;"
         )
         self.new_time_button.clicked.connect(self.generate_random_time)
 
@@ -141,7 +141,7 @@ class DigitalClockWidget(QLabel):
         self.time = time
 
         font = QFont()
-        font.setPointSize(32)
+        font.setPointSize(64)
         font.setBold(True)
         self.setFont(font)
 
@@ -149,20 +149,20 @@ class DigitalClockWidget(QLabel):
         self.update_text()
 
     def update_text(self):
-        styled_hours = self._text_style(
+        hours = self._text_style(
             self.time.toString("hh"),
             "red"
         )
-        styled_minutes = self._text_style(
+        minutes = self._text_style(
             self.time.toString("mm"),
             "cyan"
         )
         separator = self._text_style(":", "white")
-        self.setText(f"{styled_hours}{separator}{styled_minutes}")
+        self.setText(f"{hours}{separator}{minutes}")
 
     def _text_style(self, text: str, color: str) -> str:
         return (
-            f'<span style="color: {color}; font-weight: bold;">{text}</span>'
+            f'<span style="color: {color};">{text}</span>'
         )
 
 
@@ -170,7 +170,7 @@ class Clock(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Analog Clock")
-        self.resize(300, 600)
+        self.resize(600, 800)
         self.setStyleSheet("background-color: black;")
 
         self.time = QTime().currentTime()
@@ -181,10 +181,18 @@ class Clock(QWidget):
         layout.addWidget(self.analog_clock)
 
         self.time_generator = TimeGenerator(self)
+        self.time_generator.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed
+        )
         self.time_generator.time_generated.connect(self.update_time)
         layout.addWidget(self.time_generator)
 
         self.digital_clock = DigitalClockWidget(self.time, self)
+        self.digital_clock.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed
+        )
         layout.addWidget(self.digital_clock)
 
     def update_time(self, new_time: QTime):
