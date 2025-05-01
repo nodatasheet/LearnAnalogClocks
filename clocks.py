@@ -65,7 +65,7 @@ class AnalogClockWidget(QWidget):
         circle_diameter = 60
 
         for i in range(1, 13):
-            angle = math.radians(30 * i)
+            angle = math.radians(-30 * i)
             x = circle_diameter * -math.sin(angle)
             y = circle_diameter * -math.cos(angle)
             painter.drawText(int(x - 5), int(y + 5), str(i))
@@ -80,7 +80,7 @@ class AnalogClockWidget(QWidget):
 
         for i in range(1, 61):
             if i % 5 == 0:
-                angle = math.radians(6 * i)
+                angle = math.radians(-6 * i)
                 x = circle_diameter * -math.sin(angle)
                 y = circle_diameter * -math.cos(angle)
                 x_offset = -5
