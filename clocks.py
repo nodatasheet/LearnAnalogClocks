@@ -187,12 +187,10 @@ class Clock(QWidget):
 
     def update_time(self, new_time: QTime):
         """Update the clocks with the new time."""
-        self.manual_time = new_time
-
-        # Update the analog and digital clocks
-        self.analog_clock.time = self.manual_time
+        self.analog_clock.time = new_time
         self.analog_clock.update()
-        self.digital_clock.time = self.manual_time
+
+        self.digital_clock.time = new_time
         self.digital_clock.update_text()
 
 
