@@ -3,7 +3,7 @@ import sys
 import math
 from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPolygon
-from PyQt5.QtWidgets import QApplication, QPushButton, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QLayout, QPushButton, QWidget, QVBoxLayout, QLabel
 
 
 class TimeGenerator(QWidget):
@@ -29,7 +29,7 @@ class TimeGenerator(QWidget):
         random_hour = random.randint(0, 9)
         random_minute = random.choice(range(0, 59, 5))
         new_time = QTime(random_hour, random_minute)
-        self.time_generated.emit(new_time)  # Emit the new time
+        self.time_generated.emit(new_time)
 
 
 class AnalogClockWidget(QWidget):
@@ -139,8 +139,8 @@ class DigitalClockWidget(QLabel):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self.time = time
-        self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("font-size: 64px;")  # Set font size
+        self.setStyleSheet("font-size: 32px;")
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.update_text()
 
     def update_text(self):
@@ -165,33 +165,35 @@ class Clock(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Analog Clock")
-        self.resize(500, 600)
+        self.resize(300, 600)
         self.setStyleSheet("background-color: black;")
 
         self.time = QTime().currentTime()
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        self.analog_clock_widget = AnalogClockWidget(self.time, self)
-        layout.addWidget(self.analog_clock_widget)
-
-        self.digital_clock_widget = DigitalClockWidget(self.time, self)
-        layout.addWidget(self.digital_clock_widget)
+        self.analog_clock = AnalogClockWidget(self.time, self)
+        layout.addWidget(self.analog_clock)
 
         self.time_generator = TimeGenerator(self)
         self.time_generator.time_generated.connect(self.update_time)
+        self.time_generator.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.time_generator)
+
+        self.digital_clock = DigitalClockWidget(self.time, self)
+        self.digital_clock.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.digital_clock)
 
     def update_time(self, new_time: QTime):
         """Update the clocks with the new time."""
         self.manual_time = new_time
 
         # Update the analog and digital clocks
-        self.analog_clock_widget.time = self.manual_time
-        self.analog_clock_widget.update()
-        self.digital_clock_widget.time = self.manual_time
-        self.digital_clock_widget.update_text()
+        self.analog_clock.time = self.manual_time
+        self.analog_clock.update()
+        self.digital_clock.time = self.manual_time
+        self.digital_clock.update_text()
 
 
 if __name__ == "__main__":
