@@ -1,9 +1,9 @@
 import random
 import sys
 import math
-from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
-from PyQt5.QtGui import QFont, QPainter, QColor, QPolygon
-from PyQt5.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtCore import Qt, QTime, QPoint, pyqtSignal
+from PyQt6.QtGui import QFont, QPainter, QColor, QPolygon
+from PyQt6.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
 
 
 class AnalogClockWidget(QWidget):
@@ -40,7 +40,7 @@ class AnalogClockWidget(QWidget):
         side = min(self.width(), self.height())
 
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.translate(self.width() / 2, self.height() / 2)
         painter.scale(side / 200.0, side / 200.0)
 
@@ -100,7 +100,7 @@ class AnalogClockWidget(QWidget):
 
     def draw_hour_hand(self, painter: QPainter, time: QTime) -> None:
         painter.setBrush(self.hour_hand_color)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
         hour_angle = 30 * (time.hour() % 12 + time.minute() / 60.0)
         painter.rotate(hour_angle)
@@ -109,7 +109,7 @@ class AnalogClockWidget(QWidget):
 
     def draw_minute_hand(self, painter: QPainter, time: QTime) -> None:
         painter.setBrush(self.minute_hand_color)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
         minute_angle = 6 * (time.minute() + time.second() / 60.0)
         painter.rotate(minute_angle)
@@ -254,4 +254,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     clock = Clock()
     clock.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
