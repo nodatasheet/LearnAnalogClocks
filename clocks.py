@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVB
 class AnalogClockWidget(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
+
         self.time = time
 
         # Define the shapes of the hour, minute, and second hands
@@ -38,8 +39,6 @@ class AnalogClockWidget(QWidget):
     def paintEvent(self, event):
         side = min(self.width(), self.height())
 
-        time = self.time
-
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.translate(self.width() / 2, self.height() / 2)
@@ -51,8 +50,8 @@ class AnalogClockWidget(QWidget):
         self.draw_hour_numbers(painter)
         self.draw_minute_numbers(painter)
 
-        self.draw_hour_hand(painter, time)
-        self.draw_minute_hand(painter, time)
+        self.draw_hour_hand(painter, self.time)
+        self.draw_minute_hand(painter, self.time)
 
     def draw_hour_marks(self, painter: QPainter) -> None:
         painter.setPen(QColor("white"))
@@ -129,11 +128,11 @@ class DigitalClockWidget(QLabel):
         self.setFont(font)
 
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.update_text()
+        self.format_text_style()
 
-    def update_text(self):
+    def format_text_style(self):
         hours = self._text_style(
-            self.time.toString("HH"),
+            self.time.toString("hh"),
             "red"
         )
         minutes = self._text_style(
@@ -244,7 +243,7 @@ class Clock(QWidget):
         self.analog_clock.update()
 
         self.digital_clock.time = new_time
-        self.digital_clock.update_text()
+        self.digital_clock.format_text_style()
 
     def show_digital_time(self):
         """Unhide the digital clock."""
