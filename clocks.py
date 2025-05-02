@@ -46,6 +46,8 @@ class AnalogClockWidget(QWidget):
         painter.scale(side / 200.0, side / 200.0)
 
         self.draw_hour_marks(painter)
+        self.draw_minute_marks(painter)
+
         self.draw_hour_numbers(painter)
         self.draw_minute_numbers(painter)
 
@@ -55,8 +57,15 @@ class AnalogClockWidget(QWidget):
     def draw_hour_marks(self, painter: QPainter) -> None:
         painter.setPen(QColor("white"))
         for i in range(12):
-            painter.drawLine(75, 0, 80, 0)
+            painter.drawLine(70, 0, 80, 0)
             painter.rotate(30)
+
+    def draw_minute_marks(self, painter: QPainter) -> None:
+        painter.setPen(QColor("white"))
+        for i in range(60):
+            if i % 5 != 0:
+                painter.drawLine(77, 0, 80, 0)
+            painter.rotate(6)
 
     def draw_hour_numbers(self, painter: QPainter) -> None:
         painter.setPen(self.hour_text_color)
