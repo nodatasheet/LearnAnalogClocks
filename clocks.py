@@ -163,7 +163,7 @@ class Model:
 
 
 class View(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
@@ -178,7 +178,6 @@ class View(QWidget):
 
         layout = QVBoxLayout(self)
 
-        time = QTime.currentTime()
         self._analog_clock = AnalogClock(time, self)
         layout.addWidget(self._analog_clock)
 
@@ -188,7 +187,7 @@ class View(QWidget):
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self.digital_clock = DigitalClock(QTime.currentTime(), self)
+        self.digital_clock = DigitalClock(time, self)
         self.digital_clock.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
@@ -235,7 +234,8 @@ class Controller:
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     model = Model()
-    view = View()
+    current_time = model.get_round_time()
+    view = View(current_time)
     controller = Controller(model, view)
     view.show()
     sys.exit(app.exec())
