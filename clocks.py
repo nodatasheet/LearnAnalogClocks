@@ -138,13 +138,10 @@ class DigitalClock(QLabel):
         self._set_text()
 
     def _set_text(self):
-        hour_number = self._time.hour()
+        # TODO: use proper formatting and assign color
 
-        if hour_number == 0:
-            hour_number = 12
-
-        hours = self._text_style(str(hour_number), "red")
-        minutes = self._text_style(str(self._time.minute()), "cyan")
+        hours = self._text_style(self._time.toString("hh"), "red")
+        minutes = self._text_style(self._time.toString("mm"), "cyan")
         separator = self._text_style(":", "white")
 
         self.setText(f"{hours}{separator}{minutes}")
@@ -170,7 +167,7 @@ class Model:
         self._time = time
 
     def generate_random_time(self, mins_precision: int = 5) -> QTime:
-        hour = random.randint(0, 12)
+        hour = random.randint(1, 12)
         minute = round(random.randint(0, 59) / mins_precision) * mins_precision
         return QTime(hour, minute)
 
@@ -228,8 +225,7 @@ class Controller:
     def __init__(self, model: Model, view: View):
         self._model = model
         self._view = view
-        # self._time = model.get_round_time()
-        self._time = QTime(0, 0)
+        self._time = model.get_round_time()
 
         self._view.time_generator_button.clicked.connect(self.update_time)
         self._view.show_digital_button.clicked.connect(self.show_digital_clock)
