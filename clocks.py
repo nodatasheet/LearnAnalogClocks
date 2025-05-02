@@ -133,7 +133,7 @@ class DigitalClockWidget(QLabel):
 
     def update_text(self):
         hours = self._text_style(
-            self.time.toString("hh"),
+            self.time.toString("HH"),
             "red"
         )
         minutes = self._text_style(
@@ -169,9 +169,9 @@ class TimeGenerator(QWidget):
 
     def generate_random_time(self):
         """Generate a random time and emit it."""
-        random_hour = random.randint(0, 9)
-        random_minute = random.choice(range(0, 59, 5))
-        new_time = QTime(random_hour, random_minute)
+        hour = random.randint(0, 9)
+        minute = random.choice(range(0, 59, 5))
+        new_time = QTime(hour, minute)
         self.generated.emit(new_time)
 
 
