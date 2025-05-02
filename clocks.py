@@ -141,19 +141,6 @@ class DigitalClock(QLabel):
         )
 
 
-class THEME:
-    DARK = """
-    QWidget {
-        background-color: black;
-        color: white;
-    }
-    QPushButton {
-        font-size: 32px;
-        font: bold;
-    }
-    """
-
-
 class Model:
     def __init__(self):
         self._time = QTime.currentTime()
@@ -180,7 +167,14 @@ class View(QWidget):
         super().__init__(parent)
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
-        self.setStyleSheet(THEME.DARK)
+        self.setStyleSheet(
+            """
+            QPushButton {
+                font-size: 32px;
+                font: bold;
+            }
+            """
+        )
 
         layout = QVBoxLayout(self)
 
