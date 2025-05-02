@@ -1,16 +1,26 @@
-from enum import Enum
-import random
 import sys
 import math
-from PyQt6.QtCore import Qt, QTime, QPoint, pyqtSignal
-from PyQt6.QtGui import QFont, QPainter, QColor, QPolygon
-from PyQt6.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
+import random
+
+from PyQt6.QtCore import Qt, QTime, QPoint
+from PyQt6.QtGui import QColor, QFont, QPainter, QPolygon
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 class AnalogClock(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.time = time
+        self._time = time
+
+    def set_time(self, time: QTime):
+        self._time = time
 
     def paintEvent(self, event):
         side = min(self.width(), self.height())
@@ -26,8 +36,8 @@ class AnalogClock(QWidget):
         self.draw_hour_numbers(painter)
         self.draw_minute_numbers(painter)
 
-        self.draw_hour_hand(painter, self.time)
-        self.draw_minute_hand(painter, self.time)
+        self.draw_hour_hand(painter, self._time)
+        self.draw_minute_hand(painter, self._time)
 
     def draw_hour_marks(self, painter: QPainter) -> None:
         painter.setPen(QColor("white"))
@@ -113,7 +123,7 @@ class AnalogClock(QWidget):
 class DigitalClock(QLabel):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.time = time
+        self._time = time
 
         font = QFont()
         font.setPointSize(64)
@@ -123,13 +133,17 @@ class DigitalClock(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.format_text_style()
 
+    def set_time(self, time: QTime):
+        self._time = time
+        self.format_text_style()
+
     def format_text_style(self):
         hours = self._text_style(
-            self.time.toString("hh"),
+            self._time.toString("hh"),
             "red"
         )
         minutes = self._text_style(
-            self.time.toString("mm"),
+            self._time.toString("mm"),
             "cyan"
         )
         separator = self._text_style(":", "white")
@@ -155,15 +169,14 @@ class Model:
     def set_time(self, time: QTime) -> None:
         self._time = time
 
-    def generate_random_time(self) -> QTime:
-        hour = random.randint(0, 11)
-        minute = round(random.randint(0, 59) / 5) * 5
-        self._time = QTime(hour, minute)
-        return self._time
+    def generate_random_time(self, mins_precision: int = 5) -> QTime:
+        hour = random.randint(0, 12)
+        minute = round(random.randint(0, 59) / mins_precision) * mins_precision
+        return QTime(hour, minute)
 
 
 class View(QWidget):
-    def __init__(self, time: QTime, parent=None):
+    def __init__(self, initial_time: QTime, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
@@ -178,7 +191,7 @@ class View(QWidget):
 
         layout = QVBoxLayout(self)
 
-        self._analog_clock = AnalogClock(time, self)
+        self._analog_clock = AnalogClock(initial_time, self)
         layout.addWidget(self._analog_clock)
 
         self.time_generator_button = QPushButton("New Time", self)
@@ -187,24 +200,27 @@ class View(QWidget):
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self.digital_clock = DigitalClock(time, self)
-        self.digital_clock.setSizePolicy(
+        self._digital_clock = DigitalClock(initial_time, self)
+        self._digital_clock.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
-        self.digital_clock.hide()
-        layout.addWidget(self.digital_clock)
+        self._digital_clock.hide()
+        layout.addWidget(self._digital_clock)
 
-    def update_analog_clock(self, time: QTime) -> None:
-        self._analog_clock.time = time
+    def update_analog_clock(self, time: QTime):
+        self._analog_clock.set_time(time)
         self._analog_clock.update()
 
-    def update_digital_clock(self, time: QTime) -> None:
-        self.digital_clock.time = time
-        self.digital_clock.update()
+    def update_digital_clock(self, time: QTime):
+        self._digital_clock.set_time(time)
+        self._digital_clock.update()
 
-    def show_digital_clock(self) -> None:
-        self.digital_clock.show()
+    def show_digital_clock(self):
+        self._digital_clock.show()
+
+    def hide_digital_clock(self):
+        self._digital_clock.hide()
 
 
 class Controller:
@@ -213,15 +229,15 @@ class Controller:
         self._view = view
         self._time = model.get_round_time()
 
-        self._view.time_generator_button.clicked.connect(self.generate_time)
+        self._view.time_generator_button.clicked.connect(self.update_time)
         self._view.show_digital_button.clicked.connect(self.show_digital_clock)
 
         self.update_view()
 
-    def generate_time(self) -> None:
+    def update_time(self) -> None:
         self._time = self._model.generate_random_time()
-        self._view.digital_clock.hide()
         self.update_view()
+        self._view.hide_digital_clock()
 
     def show_digital_clock(self) -> None:
         self._view.show_digital_clock()
