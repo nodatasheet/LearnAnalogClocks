@@ -1,3 +1,4 @@
+from enum import Enum
 import random
 import sys
 import math
@@ -148,86 +149,60 @@ class DigitalClockWidget(QLabel):
         )
 
 
-class TimeGenerator(QWidget):
-    """A widget with a button to generate a random time."""
-    generated = pyqtSignal(QTime)  # Signal to emit the new time
+class THEME:
+    DARK = """
+    QWidget {
+        background-color: black;
+        color: white;
+    }
+    QPushButton {
+        font-size: 32px;
+        font: bold;
+    }
+    """
 
+
+class Model:
+    def __init__(self):
+        self._time = QTime.currentTime()
+
+    def get_time(self) -> QTime:
+        return self._time
+
+    def get_round_time(self, mins_precision: int = 5):
+        minute = round(self._time.minute() / mins_precision) * mins_precision
+        return QTime(self._time.hour(), minute)
+
+    def set_time(self, time: QTime) -> None:
+        self._time = time
+
+    def generate_random_time(self) -> QTime:
+        hour = random.randint(0, 11)
+        minute = round(random.randint(0, 59) / 5) * 5
+        self._time = QTime(hour, minute)
+        return self._time
+
+
+class View(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # Create the "New Time" button
-        self.button = QPushButton("New Time", self)
-        self.button.setStyleSheet(
-            "font-size: 32px; color: white; background-color: gray;"
-        )
-        self.button.clicked.connect(self.generate_random_time)
-
-        # Layout for the button
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.button)
-
-    def generate_random_time(self):
-        """Generate a random time and emit it."""
-        hour = random.randint(0, 9)
-        minute = random.choice(range(0, 59, 5))
-        new_time = QTime(hour, minute)
-        self.generated.emit(new_time)
-
-
-class ShowDigitalButton(QWidget):
-    """A widget with a button to show the digital clock."""
-    signal = pyqtSignal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        # Create the "Show Digital Time" button
-        self.button = QPushButton("Show Digital Time", self)
-        self.button.setStyleSheet(
-            "font-size: 32px; color: white; background-color: gray;"
-        )
-        self.button.clicked.connect(self.emit_signal)
-
-        # Layout for the button
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.button)
-
-    def emit_signal(self):
-        """Emit the signal and disable the button."""
-        self.signal.emit()
-
-
-class Clock(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
-        self.setStyleSheet("background-color: black;")
-
-        self.time = QTime().currentTime()
+        self.setStyleSheet(THEME.DARK)
 
         layout = QVBoxLayout(self)
 
-        self.analog_clock = AnalogClockWidget(self.time, self)
-        layout.addWidget(self.analog_clock)
+        time = QTime.currentTime()
+        self._analog_clock = AnalogClockWidget(time, self)
+        layout.addWidget(self._analog_clock)
 
-        self.time_generator = TimeGenerator(self)
-        self.time_generator.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
-        self.time_generator.generated.connect(self.update_time)
-        layout.addWidget(self.time_generator)
+        self.time_generator_button = QPushButton("New Time", self)
+        layout.addWidget(self.time_generator_button)
 
-        self.show_digital_button = ShowDigitalButton(self)
-        self.show_digital_button.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
-        self.show_digital_button.signal.connect(self.show_digital_time)
+        self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self.digital_clock = DigitalClockWidget(self.time, self)
+        self.digital_clock = DigitalClockWidget(QTime.currentTime(), self)
         self.digital_clock.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
@@ -235,23 +210,46 @@ class Clock(QWidget):
         self.digital_clock.hide()
         layout.addWidget(self.digital_clock)
 
-    def update_time(self, new_time: QTime):
-        """Update the clocks with the new time."""
-        self.digital_clock.hide()
+    def update_analog_clock(self, time: QTime) -> None:
+        self._analog_clock.time = time
+        self._analog_clock.update()
 
-        self.analog_clock.time = new_time
-        self.analog_clock.update()
+    def update_digital_clock(self, time: QTime) -> None:
+        self.digital_clock.time = time
+        self.digital_clock.update()
 
-        self.digital_clock.time = new_time
-        self.digital_clock.format_text_style()
-
-    def show_digital_time(self):
-        """Unhide the digital clock."""
+    def show_digital_clock(self) -> None:
         self.digital_clock.show()
+
+
+class Controller:
+    def __init__(self, model: Model, view: View):
+        self._model = model
+        self._view = view
+        self._time = model.get_round_time()
+
+        self._view.time_generator_button.clicked.connect(self.generate_time)
+        self._view.show_digital_button.clicked.connect(self.show_digital_clock)
+
+        self.update_view()
+
+    def generate_time(self) -> None:
+        self._time = self._model.generate_random_time()
+        self._view.digital_clock.hide()
+        self.update_view()
+
+    def show_digital_clock(self) -> None:
+        self._view.show_digital_clock()
+
+    def update_view(self) -> None:
+        self._view.update_analog_clock(self._time)
+        self._view.update_digital_clock(self._time)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    clock = Clock()
-    clock.show()
+    model = Model()
+    view = View()
+    controller = Controller(model, view)
+    view.show()
     sys.exit(app.exec())
