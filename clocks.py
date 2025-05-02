@@ -131,22 +131,22 @@ class DigitalClock(QLabel):
         self.setFont(font)
 
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.format_text_style()
+        self._set_text()
 
     def set_time(self, time: QTime):
         self._time = time
-        self.format_text_style()
+        self._set_text()
 
-    def format_text_style(self):
-        hours = self._text_style(
-            self._time.toString("hh"),
-            "red"
-        )
-        minutes = self._text_style(
-            self._time.toString("mm"),
-            "cyan"
-        )
+    def _set_text(self):
+        hour_number = self._time.hour()
+
+        if hour_number == 0:
+            hour_number = 12
+
+        hours = self._text_style(str(hour_number), "red")
+        minutes = self._text_style(str(self._time.minute()), "cyan")
         separator = self._text_style(":", "white")
+
         self.setText(f"{hours}{separator}{minutes}")
 
     def _text_style(self, text: str, color: str) -> str:
@@ -176,7 +176,7 @@ class Model:
 
 
 class View(QWidget):
-    def __init__(self, initial_time: QTime, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
@@ -190,6 +190,7 @@ class View(QWidget):
         )
 
         layout = QVBoxLayout(self)
+        initial_time = QTime()
 
         self._analog_clock = AnalogClock(initial_time, self)
         layout.addWidget(self._analog_clock)
@@ -227,7 +228,8 @@ class Controller:
     def __init__(self, model: Model, view: View):
         self._model = model
         self._view = view
-        self._time = model.get_round_time()
+        # self._time = model.get_round_time()
+        self._time = QTime(0, 0)
 
         self._view.time_generator_button.clicked.connect(self.update_time)
         self._view.show_digital_button.clicked.connect(self.show_digital_clock)
@@ -250,8 +252,7 @@ class Controller:
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     model = Model()
-    current_time = model.get_round_time()
-    view = View(current_time)
+    view = View()
     controller = Controller(model, view)
     view.show()
     sys.exit(app.exec())
