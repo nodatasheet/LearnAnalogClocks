@@ -1,64 +1,60 @@
-import random
 import sys
 import math
-from PyQt5.QtCore import Qt, QTime, QPoint, pyqtSignal
-from PyQt5.QtGui import QFont, QPainter, QColor, QPolygon
-from PyQt5.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
+import random
+
+from PyQt6.QtCore import Qt, QTime, QPoint
+from PyQt6.QtGui import QColor, QFont, QPainter, QPolygon
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QVBoxLayout,
+    QWidget,
+)
 
 
-class AnalogClockWidget(QWidget):
+class AnalogClock(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.time = time
+        self._time = time
 
-        # Define the shapes of the hour, minute, and second hands
-        self.hour_hand: QPolygon = QPolygon([
-            QPoint(5, 8),
-            QPoint(-5, 8),
-            QPoint(0, -35)
-        ])
-        self.minute_hand: QPolygon = QPolygon([
-            QPoint(3, 8),
-            QPoint(-3, 8),
-            QPoint(0, -55)
-        ])
-        self.second_hand: QPolygon = QPolygon([
-            QPoint(1, 8),
-            QPoint(-1, 8),
-            QPoint(0, -80)
-        ])
-
-        self.hour_hand_color: QColor = QColor("red")
-        self.minute_hand_color: QColor = QColor("cyan")
-        self.seconds_hand_color: QColor = QColor("white")
-
-        self.hour_text_color: QColor = QColor("red")
-        self.minute_text_color: QColor = QColor("cyan")
+    def set_time(self, time: QTime):
+        self._time = time
 
     def paintEvent(self, event):
         side = min(self.width(), self.height())
 
-        time = self.time
-
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.translate(self.width() / 2, self.height() / 2)
         painter.scale(side / 200.0, side / 200.0)
 
         self.draw_hour_marks(painter)
+        self.draw_minute_marks(painter)
+
         self.draw_hour_numbers(painter)
         self.draw_minute_numbers(painter)
 
-        self.draw_hour_hand(painter, time)
-        self.draw_minute_hand(painter, time)
+        self.draw_hour_hand(painter, self._time)
+        self.draw_minute_hand(painter, self._time)
 
     def draw_hour_marks(self, painter: QPainter) -> None:
         painter.setPen(QColor("white"))
         for i in range(12):
-            painter.drawLine(75, 0, 80, 0)
+            painter.drawLine(70, 0, 80, 0)
             painter.rotate(30)
 
+    def draw_minute_marks(self, painter: QPainter) -> None:
+        self.minute_marks_color = QColor("white")
+        painter.setPen(self.minute_marks_color)
+        for i in range(60):
+            if i % 5 != 0:
+                painter.drawLine(77, 0, 80, 0)
+            painter.rotate(6)
+
     def draw_hour_numbers(self, painter: QPainter) -> None:
+        self.hour_text_color = QColor("red")
         painter.setPen(self.hour_text_color)
         font = painter.font()
         font.setPointSize(10)
@@ -72,6 +68,7 @@ class AnalogClockWidget(QWidget):
             painter.drawText(int(x - 5), int(y + 5), str(i))
 
     def draw_minute_numbers(self, painter: QPainter) -> None:
+        self.minute_text_color = QColor("cyan")
         painter.setPen(self.minute_text_color)
         font = painter.font()
         font.setPointSize(6)
@@ -91,8 +88,15 @@ class AnalogClockWidget(QWidget):
                 painter.drawText(int(x + x_offset), int(y + y_offset), str(i))
 
     def draw_hour_hand(self, painter: QPainter, time: QTime) -> None:
+        self.hour_hand_color: QColor = QColor("red")
+
+        self.hour_hand = QPolygon([
+            QPoint(5, 8),
+            QPoint(-5, 8),
+            QPoint(0, -35)
+        ])
         painter.setBrush(self.hour_hand_color)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
         hour_angle = 30 * (time.hour() % 12 + time.minute() / 60.0)
         painter.rotate(hour_angle)
@@ -100,8 +104,15 @@ class AnalogClockWidget(QWidget):
         painter.restore()
 
     def draw_minute_hand(self, painter: QPainter, time: QTime) -> None:
+        self.minute_hand_color: QColor = QColor("cyan")
+
+        self.minute_hand = QPolygon([
+            QPoint(3, 8),
+            QPoint(-3, 8),
+            QPoint(0, -55)
+        ])
         painter.setBrush(self.minute_hand_color)
-        painter.setPen(Qt.NoPen)
+        painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
         minute_angle = 6 * (time.minute() + time.second() / 60.0)
         painter.rotate(minute_angle)
@@ -109,10 +120,10 @@ class AnalogClockWidget(QWidget):
         painter.restore()
 
 
-class DigitalClockWidget(QLabel):
+class DigitalClock(QLabel):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-        self.time = time
+        self._time = time
 
         font = QFont()
         font.setPointSize(64)
@@ -120,18 +131,19 @@ class DigitalClockWidget(QLabel):
         self.setFont(font)
 
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.update_text()
+        self._set_text()
 
-    def update_text(self):
-        hours = self._text_style(
-            self.time.toString("hh"),
-            "red"
-        )
-        minutes = self._text_style(
-            self.time.toString("mm"),
-            "cyan"
-        )
+    def set_time(self, time: QTime):
+        self._time = time
+        self._set_text()
+
+    def _set_text(self):
+        # TODO: use proper formatting and assign color
+
+        hours = self._text_style(self._time.toString("hh"), "red")
+        minutes = self._text_style(self._time.toString("mm"), "cyan")
         separator = self._text_style(":", "white")
+
         self.setText(f"{hours}{separator}{minutes}")
 
     def _text_style(self, text: str, color: str) -> str:
@@ -140,110 +152,103 @@ class DigitalClockWidget(QLabel):
         )
 
 
-class TimeGenerator(QWidget):
-    """A widget with a button to generate a random time."""
-    generated = pyqtSignal(QTime)  # Signal to emit the new time
+class Model:
+    def __init__(self):
+        self._time = QTime.currentTime()
 
+    def get_time(self) -> QTime:
+        return self._time
+
+    def get_round_time(self, mins_precision: int = 5):
+        minute = round(self._time.minute() / mins_precision) * mins_precision
+        return QTime(self._time.hour(), minute)
+
+    def set_time(self, time: QTime) -> None:
+        self._time = time
+
+    def generate_random_time(self, mins_precision: int = 5) -> QTime:
+        hour = random.randint(1, 12)
+        minute = round(random.randint(0, 59) / mins_precision) * mins_precision
+        return QTime(hour, minute)
+
+
+class View(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # Create the "New Time" button
-        self.button = QPushButton("New Time", self)
-        self.button.setStyleSheet(
-            "font-size: 32px; color: white; background-color: gray;"
-        )
-        self.button.clicked.connect(self.generate_random_time)
-
-        # Layout for the button
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.button)
-
-    def generate_random_time(self):
-        """Generate a random time and emit it."""
-        random_hour = random.randint(0, 9)
-        random_minute = random.choice(range(0, 59, 5))
-        new_time = QTime(random_hour, random_minute)
-        self.generated.emit(new_time)
-
-
-class ShowDigitalButton(QWidget):
-    """A widget with a button to show the digital clock."""
-    signal = pyqtSignal()
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        # Create the "Show Digital Time" button
-        self.button = QPushButton("Show Digital Time", self)
-        self.button.setStyleSheet(
-            "font-size: 32px; color: white; background-color: gray;"
-        )
-        self.button.clicked.connect(self.emit_signal)
-
-        # Layout for the button
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.button)
-
-    def emit_signal(self):
-        """Emit the signal and disable the button."""
-        self.signal.emit()
-
-
-class Clock(QWidget):
-    def __init__(self) -> None:
-        super().__init__()
         self.setWindowTitle("Analog Clock")
         self.resize(600, 900)
-        self.setStyleSheet("background-color: black;")
-
-        self.time = QTime().currentTime()
+        self.setStyleSheet(
+            """
+            QPushButton {
+                font-size: 32px;
+                font: bold;
+            }
+            """
+        )
 
         layout = QVBoxLayout(self)
+        initial_time = QTime()
 
-        self.analog_clock = AnalogClockWidget(self.time, self)
-        layout.addWidget(self.analog_clock)
+        self._analog_clock = AnalogClock(initial_time, self)
+        layout.addWidget(self._analog_clock)
 
-        self.time_generator = TimeGenerator(self)
-        self.time_generator.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
-        self.time_generator.generated.connect(self.update_time)
-        layout.addWidget(self.time_generator)
+        self.time_generator_button = QPushButton("New Time", self)
+        layout.addWidget(self.time_generator_button)
 
-        self.show_digital_button = ShowDigitalButton(self)
-        self.show_digital_button.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
-        self.show_digital_button.signal.connect(self.show_digital_time)
+        self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self.digital_clock = DigitalClockWidget(self.time, self)
-        self.digital_clock.setSizePolicy(
+        self._digital_clock = DigitalClock(initial_time, self)
+        self._digital_clock.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
-        self.digital_clock.hide()
-        layout.addWidget(self.digital_clock)
+        self._digital_clock.hide()
+        layout.addWidget(self._digital_clock)
 
-    def update_time(self, new_time: QTime):
-        """Update the clocks with the new time."""
-        self.digital_clock.hide()
+    def update_analog_clock(self, time: QTime):
+        self._analog_clock.set_time(time)
+        self._analog_clock.update()
 
-        self.analog_clock.time = new_time
-        self.analog_clock.update()
+    def update_digital_clock(self, time: QTime):
+        self._digital_clock.set_time(time)
+        self._digital_clock.update()
 
-        self.digital_clock.time = new_time
-        self.digital_clock.update_text()
+    def show_digital_clock(self):
+        self._digital_clock.show()
 
-    def show_digital_time(self):
-        """Unhide the digital clock."""
-        self.digital_clock.show()
+    def hide_digital_clock(self):
+        self._digital_clock.hide()
+
+
+class Controller:
+    def __init__(self, model: Model, view: View):
+        self._model = model
+        self._view = view
+        self._time = model.get_round_time()
+
+        self._view.time_generator_button.clicked.connect(self.update_time)
+        self._view.show_digital_button.clicked.connect(self.show_digital_clock)
+
+        self.update_view()
+
+    def update_time(self) -> None:
+        self._time = self._model.generate_random_time()
+        self.update_view()
+        self._view.hide_digital_clock()
+
+    def show_digital_clock(self) -> None:
+        self._view.show_digital_clock()
+
+    def update_view(self) -> None:
+        self._view.update_analog_clock(self._time)
+        self._view.update_digital_clock(self._time)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    clock = Clock()
-    clock.show()
-    sys.exit(app.exec_())
+    model = Model()
+    view = View()
+    controller = Controller(model, view)
+    view.show()
+    sys.exit(app.exec())
