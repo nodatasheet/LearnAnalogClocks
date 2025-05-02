@@ -7,35 +7,10 @@ from PyQt6.QtGui import QFont, QPainter, QColor, QPolygon
 from PyQt6.QtWidgets import QApplication, QPushButton, QSizePolicy, QWidget, QVBoxLayout, QLabel
 
 
-class AnalogClockWidget(QWidget):
+class AnalogClock(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
-
         self.time = time
-
-        # Define the shapes of the hour, minute, and second hands
-        self.hour_hand: QPolygon = QPolygon([
-            QPoint(5, 8),
-            QPoint(-5, 8),
-            QPoint(0, -35)
-        ])
-        self.minute_hand: QPolygon = QPolygon([
-            QPoint(3, 8),
-            QPoint(-3, 8),
-            QPoint(0, -55)
-        ])
-        self.second_hand: QPolygon = QPolygon([
-            QPoint(1, 8),
-            QPoint(-1, 8),
-            QPoint(0, -80)
-        ])
-
-        self.hour_hand_color: QColor = QColor("red")
-        self.minute_hand_color: QColor = QColor("cyan")
-        self.seconds_hand_color: QColor = QColor("white")
-
-        self.hour_text_color: QColor = QColor("red")
-        self.minute_text_color: QColor = QColor("cyan")
 
     def paintEvent(self, event):
         side = min(self.width(), self.height())
@@ -61,13 +36,15 @@ class AnalogClockWidget(QWidget):
             painter.rotate(30)
 
     def draw_minute_marks(self, painter: QPainter) -> None:
-        painter.setPen(QColor("white"))
+        self.minute_marks_color = QColor("white")
+        painter.setPen(self.minute_marks_color)
         for i in range(60):
             if i % 5 != 0:
                 painter.drawLine(77, 0, 80, 0)
             painter.rotate(6)
 
     def draw_hour_numbers(self, painter: QPainter) -> None:
+        self.hour_text_color = QColor("red")
         painter.setPen(self.hour_text_color)
         font = painter.font()
         font.setPointSize(10)
@@ -81,6 +58,7 @@ class AnalogClockWidget(QWidget):
             painter.drawText(int(x - 5), int(y + 5), str(i))
 
     def draw_minute_numbers(self, painter: QPainter) -> None:
+        self.minute_text_color = QColor("cyan")
         painter.setPen(self.minute_text_color)
         font = painter.font()
         font.setPointSize(6)
@@ -100,6 +78,13 @@ class AnalogClockWidget(QWidget):
                 painter.drawText(int(x + x_offset), int(y + y_offset), str(i))
 
     def draw_hour_hand(self, painter: QPainter, time: QTime) -> None:
+        self.hour_hand_color: QColor = QColor("red")
+
+        self.hour_hand = QPolygon([
+            QPoint(5, 8),
+            QPoint(-5, 8),
+            QPoint(0, -35)
+        ])
         painter.setBrush(self.hour_hand_color)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
@@ -109,6 +94,13 @@ class AnalogClockWidget(QWidget):
         painter.restore()
 
     def draw_minute_hand(self, painter: QPainter, time: QTime) -> None:
+        self.minute_hand_color: QColor = QColor("cyan")
+
+        self.minute_hand = QPolygon([
+            QPoint(3, 8),
+            QPoint(-3, 8),
+            QPoint(0, -55)
+        ])
         painter.setBrush(self.minute_hand_color)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
@@ -118,7 +110,7 @@ class AnalogClockWidget(QWidget):
         painter.restore()
 
 
-class DigitalClockWidget(QLabel):
+class DigitalClock(QLabel):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self.time = time
@@ -193,7 +185,7 @@ class View(QWidget):
         layout = QVBoxLayout(self)
 
         time = QTime.currentTime()
-        self._analog_clock = AnalogClockWidget(time, self)
+        self._analog_clock = AnalogClock(time, self)
         layout.addWidget(self._analog_clock)
 
         self.time_generator_button = QPushButton("New Time", self)
@@ -202,7 +194,7 @@ class View(QWidget):
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self.digital_clock = DigitalClockWidget(QTime.currentTime(), self)
+        self.digital_clock = DigitalClock(QTime.currentTime(), self)
         self.digital_clock.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
