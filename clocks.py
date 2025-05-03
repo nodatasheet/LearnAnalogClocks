@@ -163,16 +163,20 @@ class Model:
         return self._time
 
     def get_round_time(self, mins_precision: int = 5):
-        minute = round(self._time.minute() / mins_precision) * mins_precision
-        return QTime(self._time.hour(), minute)
+        return self._round_down(self._time, mins_precision)
+
+    def _round_down(self, time: QTime, mins_precision: int = 5):
+        minute = math.floor(time.minute() / mins_precision) * mins_precision
+        return QTime(time.hour(), minute)
 
     def set_time(self, time: QTime) -> None:
         self._time = time
 
     def generate_random_time(self, mins_precision: int = 5) -> QTime:
         hour = random.randint(1, 12)
-        minute = round(random.randint(0, 59) / mins_precision) * mins_precision
-        return QTime(hour, minute)
+        minute = round(random.randint(0, 59))
+        time = QTime(hour, minute)
+        return self._round_down(time, mins_precision)
 
 
 class View(QWidget):
