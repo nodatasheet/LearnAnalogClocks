@@ -3,7 +3,7 @@ import math
 import random
 
 from PyQt6.QtCore import Qt, QTime, QPoint
-from PyQt6.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon
+from PyQt6.QtGui import QColor, QIntValidator, QPainter, QPolygon
 from PyQt6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -123,17 +123,23 @@ class AnalogClock(QWidget):
         painter.restore()
 
 
-class DigitalClock(QLabel):
+class DigitalClock(QStackedWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self._time = time
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed
+        )
 
-        font = QFont()
-        font.setPointSize(64)
-        font.setBold(True)
-        self.setFont(font)
+        self._digital_clock = QLabel(self)
+        self._digital_clock.setStyleSheet("font-size: 64px; font: bold;")
+        self._digital_clock.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._empty_widget = QWidget(self)
+        self.addWidget(self._digital_clock)
+        self.addWidget(self._empty_widget)
+
         self._set_text()
 
     def set_time(self, time: QTime):
@@ -149,12 +155,18 @@ class DigitalClock(QLabel):
         hours = self._text_style(str(hour_number).zfill(2), "red")
         minutes = self._text_style(self._time.toString("mm"), "teal")
 
-        self.setText(f"{hours}:{minutes}")
+        self._digital_clock.setText(f"{hours}:{minutes}")
 
     def _text_style(self, text: str, color: str) -> str:
         return (
             f'<span style="color: {color};">{text}</span>'
         )
+
+    def show_clock(self):
+        self.setCurrentWidget(self._digital_clock)
+
+    def hide_clock(self):
+        self.setCurrentWidget(self._empty_widget)
 
 
 class TimeInput(QWidget):
@@ -268,17 +280,8 @@ class View(QWidget):
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self._stacked_widget = QStackedWidget(self)
-        self._stacked_widget.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Fixed
-        )
         self._digital_clock = DigitalClock(initial_time, self)
-        self._empty_widget = QWidget(self)
-        self._stacked_widget.addWidget(self._digital_clock)
-        self._stacked_widget.addWidget(self._empty_widget)
-        layout.addWidget(self._stacked_widget)
-
+        layout.addWidget(self._digital_clock)
         self.hide_digital_clock()
 
         self.time_input = TimeInput(self)
@@ -293,10 +296,10 @@ class View(QWidget):
         self._digital_clock.update()
 
     def show_digital_clock(self):
-        self._stacked_widget.setCurrentWidget(self._digital_clock)
+        self._digital_clock.show_clock()
 
     def hide_digital_clock(self):
-        self._stacked_widget.setCurrentWidget(self._empty_widget)
+        self._digital_clock.hide_clock()
 
 
 class Controller:
