@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
     QSizePolicy,
+    QStackedWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -138,9 +139,12 @@ class DigitalClock(QLabel):
         self._set_text()
 
     def _set_text(self):
-        # TODO: use proper formatting and assign color
+        hour_number = self._time.hour() % 12
 
-        hours = self._text_style(self._time.toString("hh"), "red")
+        if hour_number == 0:
+            hour_number = 12
+
+        hours = self._text_style(str(hour_number).zfill(2), "red")
         minutes = self._text_style(self._time.toString("mm"), "teal")
 
         self.setText(f"{hours}:{minutes}")
@@ -197,13 +201,18 @@ class View(QWidget):
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
 
-        self._digital_clock = DigitalClock(initial_time, self)
-        self._digital_clock.setSizePolicy(
+        self._stacked_widget = QStackedWidget(self)
+        self._stacked_widget.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed
         )
-        self._digital_clock.hide()
-        layout.addWidget(self._digital_clock)
+        self._digital_clock = DigitalClock(initial_time, self)
+        self._empty_widget = QWidget(self)
+        self._stacked_widget.addWidget(self._digital_clock)
+        self._stacked_widget.addWidget(self._empty_widget)
+        layout.addWidget(self._stacked_widget)
+
+        self.hide_digital_clock()
 
     def update_analog_clock(self, time: QTime):
         self._analog_clock.set_time(time)
@@ -214,10 +223,10 @@ class View(QWidget):
         self._digital_clock.update()
 
     def show_digital_clock(self):
-        self._digital_clock.show()
+        self._stacked_widget.setCurrentWidget(self._digital_clock)
 
     def hide_digital_clock(self):
-        self._digital_clock.hide()
+        self._stacked_widget.setCurrentWidget(self._empty_widget)
 
 
 class Controller:
