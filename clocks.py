@@ -3,10 +3,12 @@ import math
 import random
 
 from PyQt6.QtCore import Qt, QTime, QPoint
-from PyQt6.QtGui import QColor, QFont, QPainter, QPolygon
+from PyQt6.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon
 from PyQt6.QtWidgets import (
     QApplication,
+    QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QSizePolicy,
     QStackedWidget,
@@ -155,6 +157,67 @@ class DigitalClock(QLabel):
         )
 
 
+class TimeInput(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QHBoxLayout(self)
+        self.setStyleSheet(
+            """
+            QLineEdit {
+                font-size: 32px;
+                font: bold;
+            }
+            """
+        )
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Fixed
+        )
+
+        self._hours = QLineEdit(self)
+        self._hours.setMaxLength(2)
+        self._hours.setValidator(QIntValidator(0, 23, self))
+        self._hours.setPlaceholderText("HH")
+        layout.addWidget(self._hours)
+
+        self._minutes = QLineEdit(self)
+        self._minutes.setMaxLength(2)
+        self._minutes.setValidator(QIntValidator(0, 59, self))
+        self._minutes.setPlaceholderText("MM")
+        layout.addWidget(self._minutes)
+
+        self.check_button = QPushButton("Check", self)
+        self.check_button.setFixedWidth(200)
+        layout.addWidget(self.check_button)
+
+    def hours(self):
+        self._hours.setStyleSheet("")
+        return self._hours.text()
+
+    def minutes(self):
+        self._minutes.setStyleSheet("")
+        return self._minutes.text()
+
+    def set_hours_wrong(self):
+        self._hours.setStyleSheet("background-color: red;")
+
+    def set_minutes_wrong(self):
+        self._minutes.setStyleSheet("background-color: red;")
+
+    def set_hours_correct(self):
+        self._hours.setStyleSheet("background-color: green;")
+
+    def set_minutes_correct(self):
+        self._minutes.setStyleSheet("background-color: green;")
+
+    def reset(self):
+        self._hours.clear()
+        self._minutes.clear()
+        self._hours.setStyleSheet("")
+        self._minutes.setStyleSheet("")
+
+
 class Model:
     def __init__(self):
         self._time = QTime.currentTime()
@@ -218,6 +281,9 @@ class View(QWidget):
 
         self.hide_digital_clock()
 
+        self.time_input = TimeInput(self)
+        layout.addWidget(self.time_input)
+
     def update_analog_clock(self, time: QTime):
         self._analog_clock.set_time(time)
         self._analog_clock.update()
@@ -241,20 +307,48 @@ class Controller:
 
         self._view.time_generator_button.clicked.connect(self.update_time)
         self._view.show_digital_button.clicked.connect(self.show_digital_clock)
+        self._view.time_input.check_button.clicked.connect(self.check_input)
 
         self.update_view()
 
-    def update_time(self) -> None:
+    def update_time(self):
         self._time = self._model.generate_random_time()
         self.update_view()
         self._view.hide_digital_clock()
+        self._view.time_input.reset()
 
-    def show_digital_clock(self) -> None:
+    def show_digital_clock(self):
         self._view.show_digital_clock()
 
-    def update_view(self) -> None:
+    def update_view(self):
         self._view.update_analog_clock(self._time)
         self._view.update_digital_clock(self._time)
+
+    def check_input(self):
+        time_input = self._view.time_input
+        actual_hours = self._time.hour() % 12
+
+        if actual_hours == 0:
+            actual_hours = 12
+
+        if self._is_same(time_input.hours(), actual_hours):
+            time_input.set_hours_correct()
+
+        else:
+            time_input.set_hours_wrong()
+
+        if self._is_same(time_input.minutes(), self._time.minute()):
+            time_input.set_minutes_correct()
+
+        else:
+            time_input.set_minutes_wrong()
+
+    def _is_same(self, input_value: str, actual: int) -> bool:
+        if input_value.isnumeric():
+            if actual == int(input_value):
+                return True
+
+        return False
 
 
 if __name__ == "__main__":
