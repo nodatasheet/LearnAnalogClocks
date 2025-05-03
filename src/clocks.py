@@ -229,6 +229,12 @@ class TimeInput(QWidget):
         self._hours.setStyleSheet("")
         self._minutes.setStyleSheet("")
 
+    def hours_return_pressed(self):
+        return self._hours.returnPressed
+
+    def minutes_return_pressed(self):
+        return self._minutes.returnPressed
+
 
 class Model:
     def __init__(self):
@@ -274,8 +280,8 @@ class View(QWidget):
         self._analog_clock = AnalogClock(initial_time, self)
         layout.addWidget(self._analog_clock)
 
-        self.time_generator_button = QPushButton("New Time", self)
-        layout.addWidget(self.time_generator_button)
+        self.time_input = TimeInput(self)
+        layout.addWidget(self.time_input)
 
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
@@ -284,8 +290,8 @@ class View(QWidget):
         layout.addWidget(self._digital_clock)
         self.hide_digital_clock()
 
-        self.time_input = TimeInput(self)
-        layout.addWidget(self.time_input)
+        self.time_generator_button = QPushButton("New Time", self)
+        layout.addWidget(self.time_generator_button)
 
     def update_analog_clock(self, time: QTime):
         self._analog_clock.set_time(time)
@@ -308,9 +314,11 @@ class Controller:
         self._view = view
         self._time = model.get_round_time()
 
-        self._view.time_generator_button.clicked.connect(self.update_time)
-        self._view.show_digital_button.clicked.connect(self.show_digital_clock)
-        self._view.time_input.check_button.clicked.connect(self.check_input)
+        view.time_generator_button.clicked.connect(self.update_time)
+        view.show_digital_button.clicked.connect(self.show_digital_clock)
+        view.time_input.check_button.clicked.connect(self.check_input)
+        view.time_input.hours_return_pressed().connect(self.check_input)
+        view.time_input.minutes_return_pressed().connect(self.check_input)
 
         self.update_view()
 
