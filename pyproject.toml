@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "LearnAnalogClocks"
+version = "1.0.0"
+description = "A simple game for kids to teach analog clocks."
+authors = [
+    { name = "Konstantin", url = "https://github.com/nodatasheet" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+
+[project.dependencies]
+PyQt6 = "6.5.0"
