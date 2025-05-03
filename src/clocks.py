@@ -274,8 +274,8 @@ class View(QWidget):
         self._analog_clock = AnalogClock(initial_time, self)
         layout.addWidget(self._analog_clock)
 
-        self.time_generator_button = QPushButton("New Time", self)
-        layout.addWidget(self.time_generator_button)
+        self.time_input = TimeInput(self)
+        layout.addWidget(self.time_input)
 
         self.show_digital_button = QPushButton("Show Digital", self)
         layout.addWidget(self.show_digital_button)
@@ -284,8 +284,8 @@ class View(QWidget):
         layout.addWidget(self._digital_clock)
         self.hide_digital_clock()
 
-        self.time_input = TimeInput(self)
-        layout.addWidget(self.time_input)
+        self.time_generator_button = QPushButton("New Time", self)
+        layout.addWidget(self.time_generator_button)
 
     def update_analog_clock(self, time: QTime):
         self._analog_clock.set_time(time)
