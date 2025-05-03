@@ -8,7 +8,10 @@ venv/
 # Build artifacts
 build/
 dist/
+
+# PyInstaller
 *.spec
+!pyinstaller/*.spec
 
 # IDE-specific files
 .vscode/
