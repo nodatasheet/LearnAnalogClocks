@@ -229,6 +229,12 @@ class TimeInput(QWidget):
         self._hours.setStyleSheet("")
         self._minutes.setStyleSheet("")
 
+    def hours_return_pressed(self):
+        return self._hours.returnPressed
+
+    def minutes_return_pressed(self):
+        return self._minutes.returnPressed
+
 
 class Model:
     def __init__(self):
@@ -308,9 +314,11 @@ class Controller:
         self._view = view
         self._time = model.get_round_time()
 
-        self._view.time_generator_button.clicked.connect(self.update_time)
-        self._view.show_digital_button.clicked.connect(self.show_digital_clock)
-        self._view.time_input.check_button.clicked.connect(self.check_input)
+        view.time_generator_button.clicked.connect(self.update_time)
+        view.show_digital_button.clicked.connect(self.show_digital_clock)
+        view.time_input.check_button.clicked.connect(self.check_input)
+        view.time_input.hours_return_pressed().connect(self.check_input)
+        view.time_input.minutes_return_pressed().connect(self.check_input)
 
         self.update_view()
 
