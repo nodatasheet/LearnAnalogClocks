@@ -274,8 +274,16 @@ class View(QWidget):
             """
         )
 
-        layout = QVBoxLayout(self)
         initial_time = QTime()
+        layout = QVBoxLayout(self)
+
+        top_layout = QHBoxLayout()
+        top_layout.addStretch()
+        self.settings_button = QPushButton("Settings", self)
+        self.settings_button.setFixedWidth(90)
+        self.settings_button.setStyleSheet("font-size: 18px;")
+        top_layout.addWidget(self.settings_button)
+        layout.addLayout(top_layout)
 
         self._analog_clock = AnalogClock(initial_time, self)
         layout.addWidget(self._analog_clock)
