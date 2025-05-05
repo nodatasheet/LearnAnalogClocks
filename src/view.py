@@ -14,6 +14,62 @@ from PyQt6.QtWidgets import (
 )
 
 
+class MainWindow(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Analog Clock")
+        self.resize(600, 900)
+        self.setStyleSheet(
+            """
+            QPushButton {
+                font-size: 32px;
+                font: bold;
+            }
+            """
+        )
+
+        initial_time = QTime()
+        layout = QVBoxLayout(self)
+
+        top_layout = QHBoxLayout()
+        top_layout.addStretch()
+        self.settings_button = QPushButton("Settings", self)
+        self.settings_button.setFixedWidth(90)
+        self.settings_button.setStyleSheet("font-size: 18px;")
+        top_layout.addWidget(self.settings_button)
+        layout.addLayout(top_layout)
+
+        self._analog_clock = AnalogClock(initial_time, self)
+        layout.addWidget(self._analog_clock)
+
+        self.time_input = TimeInput(self)
+        layout.addWidget(self.time_input)
+
+        self.show_digital_button = QPushButton("Show Digital", self)
+        layout.addWidget(self.show_digital_button)
+
+        self._digital_clock = DigitalClock(initial_time, self)
+        layout.addWidget(self._digital_clock)
+        self.hide_digital_clock()
+
+        self.time_generator_button = QPushButton("New Time", self)
+        layout.addWidget(self.time_generator_button)
+
+    def update_analog_clock(self, time: QTime):
+        self._analog_clock.set_time(time)
+        self._analog_clock.update()
+
+    def update_digital_clock(self, time: QTime):
+        self._digital_clock.set_time(time)
+        self._digital_clock.update()
+
+    def show_digital_clock(self):
+        self._digital_clock.show_clock()
+
+    def hide_digital_clock(self):
+        self._digital_clock.hide_clock()
+
+
 class AnalogClock(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
@@ -233,57 +289,18 @@ class TimeInput(QWidget):
         return self._minutes.returnPressed
 
 
-class View(QWidget):
+class SettingsWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Analog Clock")
-        self.resize(600, 900)
-        self.setStyleSheet(
-            """
-            QPushButton {
-                font-size: 32px;
-                font: bold;
-            }
-            """
-        )
+        self.setWindowTitle("Settings")
+        self.resize(400, 300)
 
-        initial_time = QTime()
         layout = QVBoxLayout(self)
+        label = QLabel("Settings go here!", self)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
 
-        top_layout = QHBoxLayout()
-        top_layout.addStretch()
-        self.settings_button = QPushButton("Settings", self)
-        self.settings_button.setFixedWidth(90)
-        self.settings_button.setStyleSheet("font-size: 18px;")
-        top_layout.addWidget(self.settings_button)
-        layout.addLayout(top_layout)
-
-        self._analog_clock = AnalogClock(initial_time, self)
-        layout.addWidget(self._analog_clock)
-
-        self.time_input = TimeInput(self)
-        layout.addWidget(self.time_input)
-
-        self.show_digital_button = QPushButton("Show Digital", self)
-        layout.addWidget(self.show_digital_button)
-
-        self._digital_clock = DigitalClock(initial_time, self)
-        layout.addWidget(self._digital_clock)
-        self.hide_digital_clock()
-
-        self.time_generator_button = QPushButton("New Time", self)
-        layout.addWidget(self.time_generator_button)
-
-    def update_analog_clock(self, time: QTime):
-        self._analog_clock.set_time(time)
-        self._analog_clock.update()
-
-    def update_digital_clock(self, time: QTime):
-        self._digital_clock.set_time(time)
-        self._digital_clock.update()
-
-    def show_digital_clock(self):
-        self._digital_clock.show_clock()
-
-    def hide_digital_clock(self):
-        self._digital_clock.hide_clock()
+        # Example: Close button
+        close_button = QPushButton("Close", self)
+        close_button.clicked.connect(self.close)
+        layout.addWidget(close_button)

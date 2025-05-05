@@ -1,36 +1,39 @@
-from view import View
+from view import MainWindow
 from model import Model
 
 
 class Controller:
-    def __init__(self, model: Model, view: View):
+    def __init__(self, model: Model, main_window: MainWindow):
         self._model = model
-        self._view = view
+        self._main_window = main_window
         self._time = model.get_round_time()
 
-        view.time_generator_button.clicked.connect(self.update_time)
-        view.show_digital_button.clicked.connect(self.show_digital_clock)
-        view.time_input.check_button.clicked.connect(self.check_input)
-        view.time_input.hours_return_pressed().connect(self.check_input)
-        view.time_input.minutes_return_pressed().connect(self.check_input)
+        self._bind_buttons()
+        self._update_clocks()
 
-        self.update_view()
+    def _bind_buttons(self):
+        main = self._main_window
+        main.time_generator_button.clicked.connect(self._update_time)
+        main.show_digital_button.clicked.connect(self._show_digital)
+        main.time_input.check_button.clicked.connect(self._check_input)
+        main.time_input.hours_return_pressed().connect(self._check_input)
+        main.time_input.minutes_return_pressed().connect(self._check_input)
 
-    def update_time(self):
+    def _update_time(self):
         self._time = self._model.generate_random_time()
-        self.update_view()
-        self._view.hide_digital_clock()
-        self._view.time_input.reset()
+        self._update_clocks()
+        self._main_window.hide_digital_clock()
+        self._main_window.time_input.reset()
 
-    def show_digital_clock(self):
-        self._view.show_digital_clock()
+    def _show_digital(self):
+        self._main_window.show_digital_clock()
 
-    def update_view(self):
-        self._view.update_analog_clock(self._time)
-        self._view.update_digital_clock(self._time)
+    def _update_clocks(self):
+        self._main_window.update_analog_clock(self._time)
+        self._main_window.update_digital_clock(self._time)
 
-    def check_input(self):
-        time_input = self._view.time_input
+    def _check_input(self):
+        time_input = self._main_window.time_input
         actual_hours = self._time.hour() % 12
 
         if actual_hours == 0:
