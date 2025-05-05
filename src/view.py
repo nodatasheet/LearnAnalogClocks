@@ -3,6 +3,10 @@ import math
 from PyQt6.QtCore import Qt, QTime, QPoint
 from PyQt6.QtGui import QColor, QIntValidator, QPainter, QPolygon
 from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -289,18 +293,78 @@ class TimeInput(QWidget):
         return self._minutes.returnPressed
 
 
-class SettingsWindow(QWidget):
+class SettingsWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.resize(400, 300)
+        self.setStyleSheet(
+            """
+            QPushButton {
+                font-size: 18px;
+                font: bold;
+            }
+            QCheckBox, QComboBox {
+                font-size: 16px;
+            }
+            QLabel, QComboBox {
+                font-size: 16px;
+            }
+            """
+        )
 
-        layout = QVBoxLayout(self)
-        label = QLabel("Settings go here!", self)
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(label)
+        main_layout = QVBoxLayout(self)
 
-        # Example: Close button
+        visual_group = QGroupBox("Visual", self)
+        visual_layout = QVBoxLayout(visual_group)
+
+        self._minute_marks_checkbox = QCheckBox("Show minute marks", self)
+        self._hour_marks_checkbox = QCheckBox("Show hour marks", self)
+
+        visual_layout.addWidget(self._minute_marks_checkbox)
+        visual_layout.addWidget(self._hour_marks_checkbox)
+
+        self._hour_text_dropdown = self._add_dropdown(
+            label="Show hours text",
+            items=["None", "Every 1-hr", "Every 3-hr", "Every 6-hr"],
+            parent=visual_layout
+        )
+
+        self._minute_text_dropdown = self._add_dropdown(
+            label="Show minutes text",
+            items=["None", "Every 5-min", "Every 15-min", "Every 30-min"],
+            parent=visual_layout
+        )
+
+        main_layout.addWidget(visual_group)
+
+        behavior_group = QGroupBox("Behavior", self)
+        behavior_layout = QVBoxLayout(behavior_group)
+
+        self._round_minutes_dropdown = self._add_dropdown(
+            label="Round-up selected minutes: ",
+            items=["1", "5", "15", "30"],
+            parent=behavior_layout
+        )
+
+        main_layout.addWidget(behavior_group)
+
         close_button = QPushButton("Close", self)
         close_button.clicked.connect(self.close)
-        layout.addWidget(close_button)
+        main_layout.addWidget(close_button)
+
+    def _add_dropdown(self,
+                      label: str,
+                      items: list,
+                      parent: QVBoxLayout) -> QComboBox:
+
+        layout = QHBoxLayout()
+        label = QLabel(label, self)
+        dropdown = QComboBox(self)
+        dropdown.addItems(items)
+
+        layout.addWidget(label)
+        layout.addWidget(dropdown)
+        parent.addLayout(layout)
+
+        return dropdown

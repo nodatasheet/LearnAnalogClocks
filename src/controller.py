@@ -1,4 +1,4 @@
-from view import MainWindow
+from view import MainWindow, SettingsWindow
 from model import Model
 
 
@@ -18,6 +18,11 @@ class Controller:
         main.time_input.check_button.clicked.connect(self._check_input)
         main.time_input.hours_return_pressed().connect(self._check_input)
         main.time_input.minutes_return_pressed().connect(self._check_input)
+        main.settings_button.clicked.connect(self._open_settings)
+
+    def _open_settings(self):
+        self._settings_window = SettingsWindow(self._main_window)
+        self._settings_window.exec()
 
     def _update_time(self):
         self._time = self._model.generate_random_time()
