@@ -366,6 +366,14 @@ class SettingsWindow(QDialog):
         self.minute_marks_checkbox = QCheckBox("Show minute marks", self)
         self.hour_marks_checkbox = QCheckBox("Show hour marks", self)
 
+        self.hour_marks_checkbox.stateChanged.connect(
+            self._on_hour_marks_changed
+        )
+
+        self.minute_marks_checkbox.stateChanged.connect(
+            self._on_minute_marks_changed
+        )
+
         visual_layout.addWidget(self.minute_marks_checkbox)
         visual_layout.addWidget(self.hour_marks_checkbox)
 
@@ -416,6 +424,14 @@ class SettingsWindow(QDialog):
         bottom_layout.addWidget(self.set_button)
         cancel_button.clicked.connect(self.close)
         main_layout.addLayout(bottom_layout)
+
+    def _on_hour_marks_changed(self, state: int):
+        if state == Qt.CheckState.Unchecked.value:
+            self.minute_marks_checkbox.setChecked(False)
+
+    def _on_minute_marks_changed(self, state: int):
+        if state == Qt.CheckState.Checked.value:
+            self.hour_marks_checkbox.setChecked(True)
 
     def _add_dropdown(self,
                       label: str,
