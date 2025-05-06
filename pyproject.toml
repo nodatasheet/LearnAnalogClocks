@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "LearnAnalogClocks"
-version = "1.0.1"
+version = "1.1.0"
 description = "A simple game for kids to teach analog clocks."
 authors = [
     { name = "Konstantin", url = "https://github.com/nodatasheet" }
