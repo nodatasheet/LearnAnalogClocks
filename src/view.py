@@ -1,7 +1,9 @@
+from collections import namedtuple
 import math
 
 from PyQt6.QtCore import Qt, QTime, QPoint
 from PyQt6.QtGui import QColor, QIntValidator, QPainter, QPolygon
+from dataclasses import dataclass
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -16,6 +18,12 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+
+@dataclass
+class SelectionItem:
+    name: str
+    value: int
 
 
 class MainWindow(QWidget):
@@ -90,7 +98,7 @@ class AnalogClock(QWidget):
         self._minute_numbers_color = QColor("teal")
         self._minute_hand_color = QColor("teal")
 
-    def paintEvent(self, event):
+    def paintEvent(self, a0):
         side = min(self.width(), self.height())
 
         painter = QPainter(self)
@@ -318,21 +326,35 @@ class SettingsWindow(QDialog):
         visual_group = QGroupBox("Visual", self)
         visual_layout = QVBoxLayout(visual_group)
 
-        self._minute_marks_checkbox = QCheckBox("Show minute marks", self)
-        self._hour_marks_checkbox = QCheckBox("Show hour marks", self)
+        self.minute_marks_checkbox = QCheckBox("Show minute marks", self)
+        self.hour_marks_checkbox = QCheckBox("Show hour marks", self)
 
-        visual_layout.addWidget(self._minute_marks_checkbox)
-        visual_layout.addWidget(self._hour_marks_checkbox)
+        visual_layout.addWidget(self.minute_marks_checkbox)
+        visual_layout.addWidget(self.hour_marks_checkbox)
 
-        self._hour_text_dropdown = self._add_dropdown(
-            label="Show hours text",
-            items=["None", "Every 1-hr", "Every 3-hr", "Every 6-hr"],
+        minute_text_intervals = [
+            SelectionItem("None", 0),
+            SelectionItem("Every 5-min", 5),
+            SelectionItem("Every 15-min", 15),
+            SelectionItem("Every 30-min", 30)
+        ]
+
+        self.minute_text_dropdown = self._add_dropdown(
+            label="Minutes text interval",
+            items=minute_text_intervals,
             parent=visual_layout
         )
 
-        self._minute_text_dropdown = self._add_dropdown(
-            label="Show minutes text",
-            items=["None", "Every 5-min", "Every 15-min", "Every 30-min"],
+        hour_text_intervals = [
+            SelectionItem("None", 0),
+            SelectionItem("Every 1-hr", 1),
+            SelectionItem("Every 3-hr", 3),
+            SelectionItem("Every 6-hr", 6)
+        ]
+
+        self.hour_text_dropdown = self._add_dropdown(
+            label="Hours text interval",
+            items=hour_text_intervals,
             parent=visual_layout
         )
 
@@ -341,30 +363,48 @@ class SettingsWindow(QDialog):
         behavior_group = QGroupBox("Behavior", self)
         behavior_layout = QVBoxLayout(behavior_group)
 
-        self._round_minutes_dropdown = self._add_dropdown(
-            label="Round-up selected minutes: ",
-            items=["1", "5", "15", "30"],
+        round_minutes = [SelectionItem(str(i), i) for i in (1, 5, 15, 30)]
+        self.round_minutes_dropdown = self._add_dropdown(
+            label="Round-Up Minutes to Nearest",
+            items=round_minutes,
             parent=behavior_layout
         )
 
         main_layout.addWidget(behavior_group)
 
-        close_button = QPushButton("Close", self)
-        close_button.clicked.connect(self.close)
-        main_layout.addWidget(close_button)
+        bottom_layout = QHBoxLayout()
+        cancel_button = QPushButton("Cancel", self)
+        self.set_button = QPushButton("Set", self)
+        bottom_layout.addWidget(cancel_button)
+        bottom_layout.addWidget(self.set_button)
+        cancel_button.clicked.connect(self.close)
+        main_layout.addLayout(bottom_layout)
 
     def _add_dropdown(self,
                       label: str,
-                      items: list,
+                      items: list[SelectionItem],
                       parent: QVBoxLayout) -> QComboBox:
 
         layout = QHBoxLayout()
-        label = QLabel(label, self)
+        label_widget = QLabel(label, self)
         dropdown = QComboBox(self)
-        dropdown.addItems(items)
 
-        layout.addWidget(label)
+        for item in items:
+            dropdown.addItem(item.name, item)
+
+        layout.addWidget(label_widget)
         layout.addWidget(dropdown)
         parent.addLayout(layout)
 
         return dropdown
+
+    def set_current_value(self, combobox: QComboBox, value: int) -> None:
+        for i in range(combobox.count()):
+            data: SelectionItem = combobox.itemData(i)
+
+            if data.value == value:
+                combobox.setCurrentIndex(i)
+                return
+
+    def get_item(self, combobox: QComboBox) -> SelectionItem:
+        return combobox.currentData()

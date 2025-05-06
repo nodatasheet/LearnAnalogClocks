@@ -1,5 +1,5 @@
 from view import MainWindow, SettingsWindow
-from model import Model
+from model import Model, Settings
 
 
 class Controller:
@@ -8,10 +8,10 @@ class Controller:
         self._main_window = main_window
         self._time = model.get_round_time()
 
-        self._bind_buttons()
+        self._bind_main_window_buttons()
         self._update_clocks()
 
-    def _bind_buttons(self):
+    def _bind_main_window_buttons(self):
         main = self._main_window
         main.time_generator_button.clicked.connect(self._update_time)
         main.show_digital_button.clicked.connect(self._show_digital)
@@ -22,7 +22,54 @@ class Controller:
 
     def _open_settings(self):
         self._settings_window = SettingsWindow(self._main_window)
+        settings = self._model.settings
+
+        self._settings_window.minute_marks_checkbox.setChecked(
+            settings.show_minute_marks.checked
+        )
+
+        self._settings_window.hour_marks_checkbox.setChecked(
+            settings.show_hour_marks.checked
+        )
+
+        self._settings_window.set_current_value(
+            self._settings_window.minute_text_dropdown,
+            settings.minutes_text_interval.value
+        )
+
+        self._settings_window.set_current_value(
+            self._settings_window.hour_text_dropdown,
+            settings.hours_text_interval.value
+        )
+
+        self._settings_window.set_current_value(
+            self._settings_window.round_minutes_dropdown,
+            settings.round_minutes_to_nearest.value
+        )
+
+        self._settings_window.set_button.clicked.connect(self._save_settings)
         self._settings_window.exec()
+
+    def _save_settings(self):
+        settings = self._model.settings
+        window = self._settings_window
+
+        settings.show_minute_marks.checked = \
+            window.minute_marks_checkbox.isChecked()
+
+        settings.show_hour_marks.checked = \
+            window.hour_marks_checkbox.isChecked()
+
+        settings.minutes_text_interval.value = \
+            window.get_item(window.minute_text_dropdown).value
+
+        settings.hours_text_interval.value = \
+            window.get_item(window.hour_text_dropdown).value
+
+        settings.round_minutes_to_nearest.value = \
+            window.get_item(window.round_minutes_dropdown).value
+
+        window.close()
 
     def _update_time(self):
         self._time = self._model.generate_random_time()
