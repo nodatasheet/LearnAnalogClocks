@@ -11,5 +11,5 @@ if __name__ == "__main__":
     model = Model()
     view = MainWindow()
     controller = Controller(model, view)
-    view.show()
+    controller.show_main_window()
     sys.exit(app.exec())

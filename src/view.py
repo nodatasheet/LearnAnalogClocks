@@ -26,6 +26,14 @@ class SelectionItem:
     value: int
 
 
+class AnalogClockSettings:
+    def __init__(self) -> None:
+        self.show_hour_marks = True
+        self.show_minute_marks = True
+        self.hours_text_interval = 1
+        self.minutes_text_interval = 5
+
+
 class MainWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -67,11 +75,17 @@ class MainWindow(QWidget):
         self.time_generator_button = QPushButton("New Time", self)
         layout.addWidget(self.time_generator_button)
 
-    def update_analog_clock(self, time: QTime):
+    def update_analog_clock_time(self, time: QTime):
         self._analog_clock.set_time(time)
         self._analog_clock.update()
 
-    def update_digital_clock(self, time: QTime):
+    def get_analog_settings(self):
+        return self._analog_clock.get_current_settings()
+
+    def update_analog_clock_settings(self, settings: AnalogClockSettings):
+        self._analog_clock.set_settings(settings)
+
+    def update_digital_clock_time(self, time: QTime):
         self._digital_clock.set_time(time)
         self._digital_clock.update()
 
@@ -86,7 +100,20 @@ class AnalogClock(QWidget):
     def __init__(self, time: QTime, parent=None):
         super().__init__(parent)
         self._time = time
+        self._settings = AnalogClockSettings()
         self._set_colors()
+
+    def get_current_settings(self):
+        settings = AnalogClockSettings()
+        settings.hours_text_interval = self._settings.hours_text_interval
+        settings.minutes_text_interval = self._settings.minutes_text_interval
+        settings.show_hour_marks = self._settings.show_hour_marks
+        settings.show_minute_marks = self._settings.show_minute_marks
+        return settings
+
+    def set_settings(self, settings: AnalogClockSettings):
+        self._settings = settings
+        self.update()
 
     def set_time(self, time: QTime):
         self._time = time
@@ -106,27 +133,33 @@ class AnalogClock(QWidget):
         painter.translate(self.width() / 2, self.height() / 2)
         painter.scale(side / 200.0, side / 200.0)
 
-        self.draw_hour_marks(painter)
-        self.draw_minute_marks(painter)
+        if self._settings.show_hour_marks:
+            self._draw_hour_marks(painter)
 
-        self.draw_hour_numbers(painter)
-        self.draw_minute_numbers(painter)
+        if self._settings.show_minute_marks:
+            self._draw_minute_marks(painter)
 
-        self.draw_hour_hand(painter, self._time)
-        self.draw_minute_hand(painter, self._time)
+        if self._settings.hours_text_interval > 0:
+            self._draw_hour_numbers(painter)
 
-    def draw_hour_marks(self, painter: QPainter) -> None:
+        if self._settings.minutes_text_interval > 0:
+            self._draw_minute_numbers(painter)
+
+        self._draw_hour_hand(painter)
+        self._draw_minute_hand(painter)
+
+    def _draw_hour_marks(self, painter: QPainter):
         for i in range(12):
             painter.drawLine(70, 0, 80, 0)
             painter.rotate(30)
 
-    def draw_minute_marks(self, painter: QPainter) -> None:
+    def _draw_minute_marks(self, painter: QPainter):
         for i in range(60):
             if i % 5 != 0:
                 painter.drawLine(77, 0, 80, 0)
             painter.rotate(6)
 
-    def draw_hour_numbers(self, painter: QPainter) -> None:
+    def _draw_hour_numbers(self, painter: QPainter):
         painter.setPen(self._hour_numbers_color)
         font = painter.font()
         font.setPointSize(10)
@@ -134,13 +167,15 @@ class AnalogClock(QWidget):
         painter.setFont(font)
         circle_diameter = 60
 
-        for i in range(1, 13):
+        for i in range(0, 12, self._settings.hours_text_interval):
             angle = math.radians(-30 * i)
             x = circle_diameter * -math.sin(angle)
             y = circle_diameter * -math.cos(angle)
+            if i == 0:
+                i = 12
             painter.drawText(int(x - 5), int(y + 5), str(i))
 
-    def draw_minute_numbers(self, painter: QPainter) -> None:
+    def _draw_minute_numbers(self, painter: QPainter):
         painter.setPen(self._minute_numbers_color)
         font = painter.font()
         font.setPointSize(6)
@@ -148,18 +183,20 @@ class AnalogClock(QWidget):
         painter.setFont(font)
         circle_diameter = 90
 
-        for i in range(1, 61):
+        for i in range(0, 60, self._settings.minutes_text_interval):
             if i % 5 == 0:
                 angle = math.radians(-6 * i)
                 x = circle_diameter * -math.sin(angle)
                 y = circle_diameter * -math.cos(angle)
                 x_offset = -5
                 y_offset = 2.5
+
                 if i == 60:
                     i = 0
+
                 painter.drawText(int(x + x_offset), int(y + y_offset), str(i))
 
-    def draw_hour_hand(self, painter: QPainter, time: QTime) -> None:
+    def _draw_hour_hand(self, painter: QPainter):
         self.hour_hand = QPolygon([
             QPoint(5, 8),
             QPoint(-5, 8),
@@ -168,12 +205,12 @@ class AnalogClock(QWidget):
         painter.setBrush(self._hour_hand_color)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
-        hour_angle = 30 * (time.hour() % 12 + time.minute() / 60.0)
+        hour_angle = 30 * (self._time.hour() % 12 + self._time.minute() / 60.0)
         painter.rotate(hour_angle)
         painter.drawConvexPolygon(self.hour_hand)
         painter.restore()
 
-    def draw_minute_hand(self, painter: QPainter, time: QTime) -> None:
+    def _draw_minute_hand(self, painter: QPainter):
         self.minute_hand = QPolygon([
             QPoint(3, 8),
             QPoint(-3, 8),
@@ -182,7 +219,7 @@ class AnalogClock(QWidget):
         painter.setBrush(self._minute_hand_color)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.save()
-        minute_angle = 6 * (time.minute() + time.second() / 60.0)
+        minute_angle = 6 * (self._time.minute() + self._time.second() / 60.0)
         painter.rotate(minute_angle)
         painter.drawConvexPolygon(self.minute_hand)
         painter.restore()

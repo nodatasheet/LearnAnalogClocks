@@ -1,5 +1,5 @@
 from view import MainWindow, SettingsWindow
-from model import Model, Settings
+from model import Model
 
 
 class Controller:
@@ -7,9 +7,12 @@ class Controller:
         self._model = model
         self._main_window = main_window
         self._time = model.get_round_time()
-
         self._bind_main_window_buttons()
+        self._update_analog_clock_settings()
         self._update_clocks()
+
+    def show_main_window(self):
+        self._main_window.show()
 
     def _bind_main_window_buttons(self):
         main = self._main_window
@@ -24,12 +27,12 @@ class Controller:
         self._settings_window = SettingsWindow(self._main_window)
         settings = self._model.settings
 
-        self._settings_window.minute_marks_checkbox.setChecked(
-            settings.show_minute_marks.checked
-        )
-
         self._settings_window.hour_marks_checkbox.setChecked(
             settings.show_hour_marks.checked
+        )
+
+        self._settings_window.minute_marks_checkbox.setChecked(
+            settings.show_minute_marks.checked
         )
 
         self._settings_window.set_current_value(
@@ -69,7 +72,26 @@ class Controller:
         settings.round_minutes_to_nearest.value = \
             window.get_item(window.round_minutes_dropdown).value
 
+        self._update_analog_clock_settings()
         window.close()
+
+    def _update_analog_clock_settings(self):
+        model_settings = self._model.settings
+        analog_settings = self._main_window.get_analog_settings()
+
+        analog_settings.minutes_text_interval = \
+            model_settings.minutes_text_interval.value
+
+        analog_settings.hours_text_interval = \
+            model_settings.hours_text_interval.value
+
+        analog_settings.show_minute_marks = \
+            model_settings.show_minute_marks.checked
+
+        analog_settings.show_hour_marks = \
+            model_settings.show_hour_marks.checked
+
+        self._main_window.update_analog_clock_settings(analog_settings)
 
     def _update_time(self):
         self._time = self._model.generate_random_time()
@@ -81,8 +103,8 @@ class Controller:
         self._main_window.show_digital_clock()
 
     def _update_clocks(self):
-        self._main_window.update_analog_clock(self._time)
-        self._main_window.update_digital_clock(self._time)
+        self._main_window.update_analog_clock_time(self._time)
+        self._main_window.update_digital_clock_time(self._time)
 
     def _check_input(self):
         time_input = self._main_window.time_input

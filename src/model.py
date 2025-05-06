@@ -13,21 +13,23 @@ class Model:
     def get_time(self) -> QTime:
         return self._time
 
-    def get_round_time(self, mins_precision: int = 5):
-        return self._round_down(self._time, mins_precision)
+    def get_round_time(self):
+        precision = self.settings.round_minutes_to_nearest.value
+        return self._round_down(self._time, precision)
 
     def _round_down(self, time: QTime, mins_precision: int = 5):
         minute = math.floor(time.minute() / mins_precision) * mins_precision
         return QTime(time.hour(), minute)
 
-    def set_time(self, time: QTime) -> None:
+    def set_time(self, time: QTime):
         self._time = time
 
-    def generate_random_time(self, mins_precision: int = 5) -> QTime:
+    def generate_random_time(self) -> QTime:
         hour = random.randint(1, 12)
         minute = round(random.randint(0, 59))
         time = QTime(hour, minute)
-        return self._round_down(time, mins_precision)
+        precision = self.settings.round_minutes_to_nearest.value
+        return self._round_down(time, precision)
 
 
 @dataclass
