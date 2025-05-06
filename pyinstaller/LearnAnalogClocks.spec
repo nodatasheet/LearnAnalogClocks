@@ -2,8 +2,8 @@
 
 
 a = Analysis(
-    ['..\\src\\clocks.py'],
-    pathex=[],
+    ['..\\src\\clock.py'],
+    pathex=['src'],
     binaries=[],
     datas=[],
     hiddenimports=[],
